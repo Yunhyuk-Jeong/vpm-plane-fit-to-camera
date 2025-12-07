@@ -1,7 +1,5 @@
 # Plane Fit To Camera Tool
 
-**Version 1.0.7**
-
 ---
 
 ## 📖 English
@@ -373,63 +371,6 @@ Suggestions, improvements, and pull requests are welcome.
 ## 📧 Support
 
 If you encounter issues or have feature requests, please contact the author or open an issue in the repository where this tool is distributed.
-
-## 📌 Changelog
-
-### **1.0.7 – Fixed VPM Packaging Structure**
-
--   Updated GitHub Actions packaging workflow.
--   The generated .zip now contains the package contents at the root level instead of wrapping everything inside a nested folder.
--   Ensures proper compatibility with VCC (VRChat Creator Companion) and VPM.
--   No functional changes to the tool itself.
-
-### **1.0.6 – Comment Cleanup & Code Documentation Update**
-
--   Updated and refined code comments to improve clarity and maintainability.
--   Removed outdated or misleading descriptions.
--   Added additional inline documentation for better readability during development.
-
-### **1.0.5 – Package Metadata Fix & Compatibility Update**
-
--   Updated package.json to use the correct author object format required by the VRChat VPM specification.
-    This resolves installation failures in VCC where the package could not be deserialized correctly.
--   Improved overall compatibility with the VRChat Creator Companion package installer.
--   No functional changes to runtime/editor behavior; this update focuses on fixing package metadata for proper distribution.
-
-### **1.0.4 – Multi-Plane Support & Plane-Only Refactor**
-
--   Added support for assigning and fitting **multiple Plane objects** at once.
--   Updated UI to manage a list of Plane slots (add/remove/clear).
--   Removed official Quad-specific handling and simplified logic around **Plane(XZ)** usage.
--   Updated documentation to reflect Plane-only design and multi-plane workflow.
-
-### **1.0.3 – Parent Scale Compensation Added**
-
--   Fixed an issue where fitting was incorrect when the Plane had a parent object  
-    with non-uniform or very small scale.
--   Plane scaling now fully compensates for parent `lossyScale`, ensuring accurate  
-    world-space size in all hierarchy structures.
--   Also preserves local scale sign (negative scale / flipped mesh support).
-
-### **1.0.2 – Orthographic Camera Support**
-
--   Added support for orthographic cameras.
--   Plane now scales correctly using `orthographicSize`.
--   Behavior is fully unified between Perspective / Orthographic modes.
-
-### **1.0.1 – Multi-Language UI Update**
-
--   Added full localization for English, Korean, and Japanese.
--   Default language set to Korean.
--   Language selector UI improved (three-language label).
-
-### **1.0.0 – Initial Release**
-
--   Base Plane Fit To Camera functionality.
--   Support for Unity Plane (XZ) and Quad (XY).
--   Automatic position/rotation/scale fitting for perspective cameras.
--   Extra in-plane rotation (0° / 90° / 180° / 270°).
--   Undo system support.
 
 ---
 
