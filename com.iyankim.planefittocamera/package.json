@@ -1,9 +1,9 @@
 {
 	"name": "com.iyankim.planefittocamera",
 	"displayName": "Plane Fit To Camera Tool",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"unity": "2022.3",
-	"description": "Unity Editor tool that aligns plane meshes to the camera view for VRChat or general Unity workflows.\n- 1.0.1: localization improvements (KR/EN/JP)\n- 1.0.2: orthographic camera support\n- 1.0.3: fixed parent scale issue and added multi-plane support",
+	"description": "Unity Editor tool that aligns plane meshes to the camera view for VRChat or general Unity workflows.",
 	"author": "Iyan-Kim",
 	"vpmDependencies": {}
 }
