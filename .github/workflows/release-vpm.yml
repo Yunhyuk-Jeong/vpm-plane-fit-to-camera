@@ -5,6 +5,9 @@ on:
         tags:
             - 'v*'
 
+permissions:
+    contents: write
+
 jobs:
     build-and-publish:
         runs-on: ubuntu-latest
@@ -36,7 +39,7 @@ jobs:
                   echo "author_email=$AUTHOR_EMAIL" >> $GITHUB_OUTPUT
                   echo "author_url=$AUTHOR_URL" >> $GITHUB_OUTPUT
 
-            # 3) VPM ZIP 생성
+            # 3) VPM ZIP 생성 (패키지 폴더 전체)
             - name: Build VPM zip
               run: |
                   PKG_NAME=${{ steps.meta.outputs.pkg_name }}
@@ -61,7 +64,7 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-            # 6) 중앙 인덱스 레포 체크아웃
+            # 6) 중앙 인덱스 레포(iyan-vpm) 체크아웃
             - name: Checkout iyan-vpm
               uses: actions/checkout@v4
               with:
@@ -72,14 +75,14 @@ jobs:
             # 7) vpm.json 수정
             - name: Update vpm.json
               run: |
-                  PKG_NAME=${{ steps.meta.outputs.pkg_name }}
-                  VERSION=${{ steps.meta.outputs.version }}
-                  DISPLAY=${{ steps.meta.outputs.display }}
-                  DESC=${{ steps.meta.outputs.desc }}
-                  AUTHOR_NAME=${{ steps.meta.outputs.author_name }}
-                  AUTHOR_EMAIL=${{ steps.meta.outputs.author_email }}
-                  AUTHOR_URL=${{ steps.meta.outputs.author_url }}
-                  SHA=${{ steps.sha.outputs.sha }}
+                  PKG_NAME="${{ steps.meta.outputs.pkg_name }}"
+                  VERSION="${{ steps.meta.outputs.version }}"
+                  DISPLAY="${{ steps.meta.outputs.display }}"
+                  DESC="${{ steps.meta.outputs.desc }}"
+                  AUTHOR_NAME="${{ steps.meta.outputs.author_name }}"
+                  AUTHOR_EMAIL="${{ steps.meta.outputs.author_email }}"
+                  AUTHOR_URL="${{ steps.meta.outputs.author_url }}"
+                  SHA="${{ steps.sha.outputs.sha }}"
 
                   VPM="iyan-vpm/vpm.json"
 
@@ -137,3 +140,5 @@ jobs:
 
                   git commit -m "chore(vpm): auto-update $PKG_NAME $VERSION"
                   git push
+              env:
+                  GITHUB_TOKEN: ${{ secrets.VPM_PUSH_TOKEN }}
