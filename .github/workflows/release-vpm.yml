@@ -1,0 +1,102 @@
+name: Build and Publish VPM Package
+
+on:
+    push:
+        tags:
+            - 'v*'
+
+jobs:
+    build-package:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repo
+              uses: actions/checkout@v4
+
+            - name: Extract version
+              id: get_version
+              run: |
+                  VERSION="${GITHUB_REF#refs/tags/v}"
+                  echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+            - name: Zip VPM package
+              run: |
+                  PKG_NAME=$(jq -r '.name' package.json)
+                  VERSION=${{ steps.get_version.outputs.version }}
+
+                  mkdir -p out
+                  zip -r "out/${PKG_NAME}-${VERSION}.zip" . -x "*.git*"
+
+            - name: Compute SHA256
+              id: sha
+              run: |
+                  FILE=$(ls out/*.zip)
+                  SHA=$(sha256sum "$FILE" | awk '{print $1}')
+                  echo "sha=$SHA" >> $GITHUB_OUTPUT
+
+            - name: Create Release (if not exists)
+              uses: softprops/action-gh-release@v2
+              with:
+                  files: out/*.zip
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Checkout iyan-vpm repo
+              uses: actions/checkout@v4
+              with:
+                  repository: Yunhyuk-Jeong/iyan-vpm
+                  token: ${{ secrets.VPM_PUSH_TOKEN }}
+                  path: iyan-vpm
+
+            - name: Update vpm.json
+              run: |
+                  PKG_NAME=$(jq -r '.name' package.json)
+                  DISPLAY=$(jq -r '.displayName' package.json)
+                  VERSION=${{ steps.get_version.outputs.version }}
+                  SHA=${{ steps.sha.outputs.sha }}
+
+                  VPM=iyan-vpm/vpm.json
+
+                  # 기존 버전 블록 제거 (중복 방지)
+                  cat $VPM | jq "del(.packages[\"$PKG_NAME\"].versions[\"$VERSION\"])" > temp.json
+                  mv temp.json $VPM
+
+                  # 새 버전 블록 추가
+                  cat $VPM | jq "
+                    .packages.\"$PKG_NAME\".versions.\"$VERSION\" = {
+                      name: \"$PKG_NAME\",
+                      displayName: \"$DISPLAY\",
+                      version: \"$VERSION\",
+                      unity: \"2022.3\",
+                      description: \"$(jq -r '.description' package.json)\",
+                      vrchatVersion: \"2022.1.1\",
+                      author: $(jq '.author' package.json),
+                      dependencies: {},
+                      url: \"https://github.com/${{ github.repository }}/releases/download/v$VERSION/${PKG_NAME}-$VERSION.zip\",
+                      repo: \"https://raw.githubusercontent.com/Yunhyuk-Jeong/iyan-vpm/main/vpm.json\",
+                      zipSHA256: \"$SHA\",
+                      documentationUrl: \"https://github.com/${{ github.repository }}\",
+                      changelogUrl: \"https://github.com/${{ github.repository }}/releases/tag/v$VERSION\"
+                    }
+                  " > temp.json
+                  mv temp.json $VPM
+
+            - name: Commit & push updated vpm.json
+              run: |
+                  cd iyan-vpm
+                  git config user.name "github-actions"
+                  git config user.email "github-actions@github.com"
+                  git checkout -b "update-${{ steps.get_version.outputs.version }}"
+                  git add vpm.json
+                  git commit -m "chore(vpm): auto-update to ${{ steps.get_version.outputs.version }}"
+                  git push --set-upstream origin "update-${{ steps.get_version.outputs.version }}"
+              env:
+                  GITHUB_TOKEN: ${{ secrets.VPM_PUSH_TOKEN }}
+
+            - name: Create PR to merge into main
+              uses: peter-evans/create-pull-request@v6
+              with:
+                  token: ${{ secrets.VPM_PUSH_TOKEN }}
+                  title: 'Update VPM index for version ${{ steps.get_version.outputs.version }}'
+                  body: 'Automatically generated PR to update vpm.json.'
+                  branch: 'update-${{ steps.get_version.outputs.version }}'
+                  base: 'main'
