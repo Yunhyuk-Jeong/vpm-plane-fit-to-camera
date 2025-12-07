@@ -1,6 +1,6 @@
 # Plane Fit To Camera Tool
 
-**Version 1.0.6**
+**Version 1.0.7**
 
 ---
 
@@ -375,6 +375,13 @@ Suggestions, improvements, and pull requests are welcome.
 If you encounter issues or have feature requests, please contact the author or open an issue in the repository where this tool is distributed.
 
 ## 📌 Changelog
+
+### **1.0.7 – Fixed VPM Packaging Structure**
+
+-   Updated GitHub Actions packaging workflow.
+-   The generated .zip now contains the package contents at the root level instead of wrapping everything inside a nested folder.
+-   Ensures proper compatibility with VCC (VRChat Creator Companion) and VPM.
+-   No functional changes to the tool itself.
 
 ### **1.0.6 – Comment Cleanup & Code Documentation Update**
 
