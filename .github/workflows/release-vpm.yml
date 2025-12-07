@@ -41,12 +41,13 @@ jobs:
 
             # 3) VPM ZIP 생성 (패키지 폴더 전체)
             - name: Build VPM zip
+              working-directory: com.iyankim.planefittocamera
               run: |
-                  PKG_NAME=${{ steps.meta.outputs.pkg_name }}
-                  VERSION=${{ steps.meta.outputs.version }}
+                  PKG_NAME="${{ steps.meta.outputs.pkg_name }}"
+                  VERSION="${{ steps.meta.outputs.version }}"
 
-                  mkdir -p out
-                  zip -r "out/${PKG_NAME}-${VERSION}.zip" com.iyankim.planefittocamera
+                  mkdir -p ../out
+                  zip -r "../out/${PKG_NAME}-${VERSION}.zip" .
 
             # 4) SHA256 계산
             - name: Compute SHA256
