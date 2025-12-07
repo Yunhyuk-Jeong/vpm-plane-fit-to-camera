@@ -6,14 +6,14 @@ public class PlaneFitToCameraTool : EditorWindow
     private Camera targetCamera;
     private Transform planeTransform;
 
-    //*  Options
+    //* Options
     private bool alignPosition = true;
     private bool alignRotation = true;
     private bool useCurrentDistance = true;
     private float manualDistance = 1f;
     private bool keepSquare = false;
 
-    //*  Extra in-plane rotation
+    //* Extra in-plane rotation
     private enum ExtraRotation
     {
         Rot0,
@@ -24,7 +24,7 @@ public class PlaneFitToCameraTool : EditorWindow
 
     private ExtraRotation extraRotation = ExtraRotation.Rot0;
 
-    //*  Language selection (default: Korean)
+    //* Language selection (default: Korean)
     private enum Language
     {
         English,
@@ -72,7 +72,7 @@ public class PlaneFitToCameraTool : EditorWindow
 
         EditorGUILayout.Space(8);
 
-        //*  Rotation dropdown
+        //* Rotation dropdown
         EditorGUILayout.LabelField(Tr("RotationHeader"), EditorStyles.boldLabel);
         extraRotation = (ExtraRotation)EditorGUILayout.Popup(
             (int)extraRotation,
@@ -94,13 +94,13 @@ public class PlaneFitToCameraTool : EditorWindow
             EditorGUILayout.HelpBox(Tr("WarnMissingCameraPlane"), MessageType.Warning);
         }
 
-        //*  Language selector (Header shows all 3 languages)
+        //* Language selector (Header shows all 3 languages)
         EditorGUILayout.Space(10);
         EditorGUILayout.LabelField("Language / 언어 / 言語", EditorStyles.boldLabel);
         selectedLanguage = (Language)EditorGUILayout.EnumPopup(selectedLanguage);
     }
 
-    //*  Localization
+    //* Localization
     private string Tr(string key)
     {
         switch (selectedLanguage)
@@ -217,7 +217,7 @@ public class PlaneFitToCameraTool : EditorWindow
         return key;
     }
 
-    //*  Mesh detect
+    //* Mesh detect
     private enum MeshType { Unknown, Plane, Quad }
 
     private MeshType DetectMeshType(out float meshSize)
@@ -244,7 +244,7 @@ public class PlaneFitToCameraTool : EditorWindow
         return MeshType.Unknown;
     }
 
-    //*  Main logic
+    //* Main logic
     private void FitPlane()
     {
         if (targetCamera == null || planeTransform == null)
@@ -255,7 +255,7 @@ public class PlaneFitToCameraTool : EditorWindow
 
         Undo.RecordObject(planeTransform, "Fit Plane");
 
-        //*  --- Distance from camera (used for positioning only) ---
+        //* --- Distance from camera (used for positioning only) ---
         float distance;
         if (useCurrentDistance)
         {
@@ -268,18 +268,18 @@ public class PlaneFitToCameraTool : EditorWindow
             distance = Mathf.Max(0.01f, manualDistance);
         }
 
-        //*  --- Size in view space ---
+        //* --- Size in view space ---
         float width, height;
 
         if (targetCamera.orthographic)
         {
-            //*  Orthographic: size is independent of distance
+            //* Orthographic: size is independent of distance
             height = 2f * targetCamera.orthographicSize;
             width = height * targetCamera.aspect;
         }
         else
         {
-            //*  Perspective: size depends on distance and FOV
+            //* Perspective: size depends on distance and FOV
             height = 2f * distance * Mathf.Tan(targetCamera.fieldOfView * 0.5f * Mathf.Deg2Rad);
             width = height * targetCamera.aspect;
         }
@@ -293,32 +293,50 @@ public class PlaneFitToCameraTool : EditorWindow
         float meshSize;
         MeshType type = DetectMeshType(out meshSize);
 
-        //*  --- Scale ---
-        Vector3 scale = planeTransform.localScale;
+        //* --- Scale (parent scale compensated) ---
+        Vector3 localScale = planeTransform.localScale;
+        Vector3 parentScale = planeTransform.parent != null
+            ? planeTransform.parent.lossyScale
+            : Vector3.one;
+
+        //* Avoid division by zero
+        float parentX = Mathf.Abs(parentScale.x) < 1e-6f ? 1f : Mathf.Abs(parentScale.x);
+        float parentY = Mathf.Abs(parentScale.y) < 1e-6f ? 1f : Mathf.Abs(parentScale.y);
+        float parentZ = Mathf.Abs(parentScale.z) < 1e-6f ? 1f : Mathf.Abs(parentScale.z);
 
         if (type == MeshType.Plane)
         {
-            //*  Plane: XZ plane
-            scale.x = width / meshSize;
-            scale.z = height / meshSize;
+            //* Plane: XZ plane
+            float signX = Mathf.Sign(localScale.x);
+            float signZ = Mathf.Sign(localScale.z);
+            if (Mathf.Approximately(signX, 0f)) signX = 1f;
+            if (Mathf.Approximately(signZ, 0f)) signZ = 1f;
+
+            localScale.x = signX * (width / (meshSize * parentX));
+            localScale.z = signZ * (height / (meshSize * parentZ));
         }
         else
         {
-            //*  Quad / Unknown: XY plane
-            scale.x = width / meshSize;
-            scale.y = height / meshSize;
+            //* Quad / Unknown: XY plane
+            float signX = Mathf.Sign(localScale.x);
+            float signY = Mathf.Sign(localScale.y);
+            if (Mathf.Approximately(signX, 0f)) signX = 1f;
+            if (Mathf.Approximately(signY, 0f)) signY = 1f;
+
+            localScale.x = signX * (width / (meshSize * parentX));
+            localScale.y = signY * (height / (meshSize * parentY));
         }
 
-        planeTransform.localScale = scale;
+        planeTransform.localScale = localScale;
 
-        //*  --- Position ---
+        //* --- Position ---
         if (alignPosition)
         {
             planeTransform.position = targetCamera.transform.position +
                                       targetCamera.transform.forward * distance;
         }
 
-        //*  --- Rotation ---
+        //* --- Rotation ---
         if (alignRotation)
         {
             var camTr = targetCamera.transform;
@@ -336,7 +354,7 @@ public class PlaneFitToCameraTool : EditorWindow
                 rot = Quaternion.LookRotation(-camTr.forward, camTr.up);
             }
 
-            //*  Flip so texture is not upside down
+            //* Flip so texture is not upside down
             rot *= Quaternion.Euler(0, 180, 0);
 
             float angle = extraRotation switch

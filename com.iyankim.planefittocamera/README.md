@@ -1,6 +1,6 @@
 # Plane Fit To Camera Tool
 
-**Version 1.0.2**
+**Version 1.0.3**
 
 ---
 
@@ -369,6 +369,36 @@ Suggestions, improvements, and pull requests are welcome.
 ## 📧 Support
 
 If you encounter issues or have feature requests, please contact the author or open an issue in the repository where this tool is distributed.
+
+## 📌 Changelog
+
+### **1.0.3 – Parent Scale Compensation Added**
+
+-   Fixed an issue where fitting was incorrect when the Plane/Quad had a parent object  
+    with non-uniform or very small scale.
+-   Plane/Quad scaling now fully compensates for parent `lossyScale`, ensuring accurate  
+    world-space size in all hierarchy structures.
+-   Also preserves local scale sign (negative scale / flipped mesh support).
+
+### **1.0.2 – Orthographic Camera Support**
+
+-   Added support for orthographic cameras.
+-   Plane/Quad now scales correctly using `orthographicSize`.
+-   Behavior is fully unified between Perspective / Orthographic modes.
+
+### **1.0.1 – Multi-Language UI Update**
+
+-   Added full localization for English, Korean, and Japanese.
+-   Default language set to Korean.
+-   Language selector UI improved (three-language label).
+
+### **1.0.0 – Initial Release**
+
+-   Base Plane Fit To Camera functionality.
+-   Support for Unity Plane (XZ) and Quad (XY).
+-   Automatic position/rotation/scale fitting for perspective cameras.
+-   Extra in-plane rotation (0° / 90° / 180° / 270°).
+-   Undo system support.
 
 ---
 
