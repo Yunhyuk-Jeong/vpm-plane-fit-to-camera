@@ -1,6 +1,6 @@
 # Plane Fit To Camera Tool
 
-**Version 1.0.5**
+**Version 1.0.6**
 
 ---
 
@@ -376,7 +376,13 @@ If you encounter issues or have feature requests, please contact the author or o
 
 ## 📌 Changelog
 
-### 1.0.5 – Package Metadata Fix & Compatibility Update
+### **1.0.6 – Comment Cleanup & Code Documentation Update**
+
+-   Updated and refined code comments to improve clarity and maintainability.
+-   Removed outdated or misleading descriptions.
+-   Added additional inline documentation for better readability during development.
+
+### **1.0.5 – Package Metadata Fix & Compatibility Update**
 
 -   Updated package.json to use the correct author object format required by the VRChat VPM specification.
     This resolves installation failures in VCC where the package could not be deserialized correctly.

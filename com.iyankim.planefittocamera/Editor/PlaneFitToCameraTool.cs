@@ -6,17 +6,17 @@ public class PlaneFitToCameraTool : EditorWindow
 {
     private Camera targetCamera;
 
-    //*  Multiple planes support
+    //* Multiple planes support
     private List<Transform> planeTransforms = new List<Transform>();
 
-    //*  Options
+    //* Options
     private bool alignPosition = true;
     private bool alignRotation = true;
     private bool useCurrentDistance = true;
     private float manualDistance = 1f;
     private bool keepSquare = false;
 
-    //*  Extra in-plane rotation
+    //* Extra in-plane rotation
     private enum ExtraRotation
     {
         Rot0,
@@ -27,7 +27,7 @@ public class PlaneFitToCameraTool : EditorWindow
 
     private ExtraRotation extraRotation = ExtraRotation.Rot0;
 
-    //*  Language selection (default: Korean)
+    //* Language selection (default: Korean)
     private enum Language
     {
         English,
@@ -59,7 +59,7 @@ public class PlaneFitToCameraTool : EditorWindow
         EditorGUILayout.HelpBox(Tr("HelpText"), MessageType.Info);
         EditorGUILayout.Space(5);
 
-        //*  Camera
+        //* Camera
         targetCamera = (Camera)EditorGUILayout.ObjectField(
             Tr("CameraLabel"),
             targetCamera,
@@ -68,10 +68,10 @@ public class PlaneFitToCameraTool : EditorWindow
 
         EditorGUILayout.Space(5);
 
-        //*  Plane list header
+        //* Plane list header
         EditorGUILayout.LabelField(Tr("PlaneLabel"), EditorStyles.boldLabel);
 
-        //*  Plane list
+        //* Plane list
         EditorGUILayout.BeginVertical("box");
         if (planeTransforms.Count == 0)
         {
@@ -125,7 +125,7 @@ public class PlaneFitToCameraTool : EditorWindow
 
         EditorGUILayout.Space(8);
 
-        //*  Rotation dropdown
+        //* Rotation dropdown
         EditorGUILayout.LabelField(Tr("RotationHeader"), EditorStyles.boldLabel);
         extraRotation = (ExtraRotation)EditorGUILayout.Popup(
             (int)extraRotation,
@@ -157,13 +157,13 @@ public class PlaneFitToCameraTool : EditorWindow
             EditorGUILayout.HelpBox(Tr("WarnMissingCameraPlane"), MessageType.Warning);
         }
 
-        //*  Language selector (Header shows all 3 languages)
+        //* Language selector (Header shows all 3 languages)
         EditorGUILayout.Space(10);
         EditorGUILayout.LabelField("Language / 언어 / 言語", EditorStyles.boldLabel);
         selectedLanguage = (Language)EditorGUILayout.EnumPopup(selectedLanguage);
     }
 
-    //*  Localization
+    //* Localization
     private string Tr(string key)
     {
         switch (selectedLanguage)
@@ -290,12 +290,12 @@ public class PlaneFitToCameraTool : EditorWindow
         return key;
     }
 
-    //*  Mesh detect (Plane only)
+    //* Mesh detect (Plane only)
     private enum MeshType { Unknown, Plane }
 
     private MeshType DetectMeshType(Transform plane, out float meshSize)
     {
-        meshSize = 10f; //*  기본 Plane 가정
+        meshSize = 10f; //* 기본 Plane 가정
 
         var mf = plane != null ? plane.GetComponent<MeshFilter>() : null;
         if (mf == null || mf.sharedMesh == null)
@@ -308,11 +308,11 @@ public class PlaneFitToCameraTool : EditorWindow
             return MeshType.Plane;
         }
 
-        //*  이름이 달라도 Plane처럼 10x10으로 쓴다거나, 필요하면 여기서 변경 가능
+        //* 이름이 달라도 Plane처럼 10x10으로 쓴다거나, 필요하면 여기서 변경 가능
         return MeshType.Unknown;
     }
 
-    //*  Fit all planes
+    //* Fit all planes
     private void FitAllPlanes()
     {
         if (targetCamera == null)
@@ -341,7 +341,7 @@ public class PlaneFitToCameraTool : EditorWindow
         }
     }
 
-    //*  Main logic for a single plane
+    //* Main logic for a single plane
     private void FitPlane(Transform planeTransform)
     {
         if (targetCamera == null || planeTransform == null)
@@ -349,7 +349,7 @@ public class PlaneFitToCameraTool : EditorWindow
 
         Undo.RecordObject(planeTransform, "Fit Plane");
 
-        //*  --- Distance from camera (used for positioning only) ---
+        //* --- Distance from camera (used for positioning only) ---
         float distance;
         if (useCurrentDistance)
         {
@@ -362,18 +362,18 @@ public class PlaneFitToCameraTool : EditorWindow
             distance = Mathf.Max(0.01f, manualDistance);
         }
 
-        //*  --- Size in view space ---
+        //* --- Size in view space ---
         float width, height;
 
         if (targetCamera.orthographic)
         {
-            //*  Orthographic: size is independent of distance
+            //* Orthographic: size is independent of distance
             height = 2f * targetCamera.orthographicSize;
             width = height * targetCamera.aspect;
         }
         else
         {
-            //*  Perspective: size depends on distance and FOV
+            //* Perspective: size depends on distance and FOV
             height = 2f * distance * Mathf.Tan(targetCamera.fieldOfView * 0.5f * Mathf.Deg2Rad);
             width = height * targetCamera.aspect;
         }
@@ -385,9 +385,9 @@ public class PlaneFitToCameraTool : EditorWindow
         }
 
         float meshSize;
-        DetectMeshType(planeTransform, out meshSize); //*  Plane 기준, meshSize는 보정용
+        DetectMeshType(planeTransform, out meshSize); //* Plane 기준, meshSize는 보정용
 
-        //*  --- Scale (parent scale compensated, XZ 기준) ---
+        //* --- Scale (parent scale compensated, XZ 기준) ---
         Vector3 localScale = planeTransform.localScale;
         Vector3 parentScale = planeTransform.parent != null
             ? planeTransform.parent.lossyScale
@@ -406,26 +406,26 @@ public class PlaneFitToCameraTool : EditorWindow
 
         planeTransform.localScale = localScale;
 
-        //*  --- Position ---
+        //* --- Position ---
         if (alignPosition)
         {
             planeTransform.position = targetCamera.transform.position +
                                       targetCamera.transform.forward * distance;
         }
 
-        //*  --- Rotation (XZ Plane 기준) ---
+        //* --- Rotation (XZ Plane 기준) ---
         if (alignRotation)
         {
             var camTr = targetCamera.transform;
 
-            //*  Plane: XZ plane, local Y is normal
+            //* Plane: XZ plane, local Y is normal
             Vector3 Yp = -camTr.forward;
             Vector3 Xp = camTr.right;
             Vector3 Zp = Vector3.Cross(Xp, Yp).normalized;
 
             Quaternion rot = Quaternion.LookRotation(Zp, Yp);
 
-            //*  Flip so texture is not upside down (필요 없으면 이 줄 빼도 됨)
+            //* Flip so texture is not upside down (필요 없으면 이 줄 빼도 됨)
             rot *= Quaternion.Euler(0, 180, 0);
 
             float angle = extraRotation switch
