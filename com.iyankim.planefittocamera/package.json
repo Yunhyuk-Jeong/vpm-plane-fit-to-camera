@@ -5,7 +5,9 @@
 	"unity": "2022.3",
 	"description": "Unity Editor tool that aligns plane meshes to the camera view for VRChat and general Unity workflows.",
 	"author": {
-		"name": "Iyan-Kim"
+		"name": "Iyan-Kim",
+		"email": "yunhyukjeong02@gmail.com",
+		"url": "https://github.com/Yunhyuk-Jeong/vpm-plane-fit-to-camera"
 	},
 	"vpmDependencies": {}
 }
