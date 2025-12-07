@@ -6,14 +6,14 @@ public class PlaneFitToCameraTool : EditorWindow
     private Camera targetCamera;
     private Transform planeTransform;
 
-    // Options
+    //*  Options
     private bool alignPosition = true;
     private bool alignRotation = true;
     private bool useCurrentDistance = true;
     private float manualDistance = 1f;
     private bool keepSquare = false;
 
-    // Extra in-plane rotation
+    //*  Extra in-plane rotation
     private enum ExtraRotation
     {
         Rot0,
@@ -24,7 +24,7 @@ public class PlaneFitToCameraTool : EditorWindow
 
     private ExtraRotation extraRotation = ExtraRotation.Rot0;
 
-    // Language selection (default: Korean)
+    //*  Language selection (default: Korean)
     private enum Language
     {
         English,
@@ -72,7 +72,7 @@ public class PlaneFitToCameraTool : EditorWindow
 
         EditorGUILayout.Space(8);
 
-        // Rotation dropdown
+        //*  Rotation dropdown
         EditorGUILayout.LabelField(Tr("RotationHeader"), EditorStyles.boldLabel);
         extraRotation = (ExtraRotation)EditorGUILayout.Popup(
             (int)extraRotation,
@@ -94,13 +94,13 @@ public class PlaneFitToCameraTool : EditorWindow
             EditorGUILayout.HelpBox(Tr("WarnMissingCameraPlane"), MessageType.Warning);
         }
 
-        // Language selector (Header shows all 3 languages)
+        //*  Language selector (Header shows all 3 languages)
         EditorGUILayout.Space(10);
         EditorGUILayout.LabelField("Language / 언어 / 言語", EditorStyles.boldLabel);
         selectedLanguage = (Language)EditorGUILayout.EnumPopup(selectedLanguage);
     }
 
-    // Localization
+    //*  Localization
     private string Tr(string key)
     {
         switch (selectedLanguage)
@@ -130,7 +130,8 @@ public class PlaneFitToCameraTool : EditorWindow
             case "MainTitle": return "Plane Fit To Camera";
             case "HelpText":
                 return "Assign a Camera and Plane/Quad, then press 'Fit Plane' to match\n" +
-                       "its position/rotation/scale to the camera view.\nSupports Unity Plane (XZ) and Quad (XY).";
+                       "its position/rotation/scale to the camera view.\nSupports Unity Plane (XZ) and Quad (XY).\n" +
+                       "Works with both Perspective and Orthographic cameras.";
             case "CameraLabel": return "Camera";
             case "PlaneLabel": return "Plane / Quad";
             case "OptionsHeader": return "Options";
@@ -160,7 +161,9 @@ public class PlaneFitToCameraTool : EditorWindow
             case "MainTitle": return "Plane Fit To Camera";
             case "HelpText":
                 return "카메라와 Plane/Quad를 지정한 뒤 'Fit Plane' 버튼을 누르면\n" +
-                       "카메라 화면에 딱 맞도록 위치/회전/스케일이 자동 조정됩니다.\nUnity 기본 Plane(XZ), Quad(XY) 지원.";
+                       "카메라 화면에 딱 맞도록 위치/회전/스케일이 자동 조정됩니다.\n" +
+                       "Unity 기본 Plane(XZ), Quad(XY) 지원.\n" +
+                       "원근/직교(Orthographic) 카메라 모두 지원합니다.";
             case "CameraLabel": return "카메라";
             case "PlaneLabel": return "Plane / Quad";
             case "OptionsHeader": return "옵션";
@@ -190,7 +193,9 @@ public class PlaneFitToCameraTool : EditorWindow
             case "MainTitle": return "Plane Fit To Camera";
             case "HelpText":
                 return "カメラとPlane/Quadを指定して「Fit Plane」を押すと、\n" +
-                       "カメラビューに合わせて自動で位置・回転・スケールを調整します。";
+                       "カメラビューに合わせて自動で位置・回転・スケールを調整します。\n" +
+                       "Unity標準のPlane(XZ)、Quad(XY)対応。\n" +
+                       "パースペクティブ／オーソグラフィック両カメラに対応。";
             case "CameraLabel": return "カメラ";
             case "PlaneLabel": return "Plane / Quad";
             case "OptionsHeader": return "オプション";
@@ -212,7 +217,7 @@ public class PlaneFitToCameraTool : EditorWindow
         return key;
     }
 
-    // Mesh detect
+    //*  Mesh detect
     private enum MeshType { Unknown, Plane, Quad }
 
     private MeshType DetectMeshType(out float meshSize)
@@ -239,7 +244,7 @@ public class PlaneFitToCameraTool : EditorWindow
         return MeshType.Unknown;
     }
 
-    // Main logic
+    //*  Main logic
     private void FitPlane()
     {
         if (targetCamera == null || planeTransform == null)
@@ -250,6 +255,7 @@ public class PlaneFitToCameraTool : EditorWindow
 
         Undo.RecordObject(planeTransform, "Fit Plane");
 
+        //*  --- Distance from camera (used for positioning only) ---
         float distance;
         if (useCurrentDistance)
         {
@@ -257,10 +263,26 @@ public class PlaneFitToCameraTool : EditorWindow
             distance = Vector3.Dot(camToPlane, targetCamera.transform.forward);
             if (distance <= 0.001f) distance = Mathf.Max(0.01f, manualDistance);
         }
-        else distance = Mathf.Max(0.01f, manualDistance);
+        else
+        {
+            distance = Mathf.Max(0.01f, manualDistance);
+        }
 
-        float height = 2f * distance * Mathf.Tan(targetCamera.fieldOfView * 0.5f * Mathf.Deg2Rad);
-        float width = height * targetCamera.aspect;
+        //*  --- Size in view space ---
+        float width, height;
+
+        if (targetCamera.orthographic)
+        {
+            //*  Orthographic: size is independent of distance
+            height = 2f * targetCamera.orthographicSize;
+            width = height * targetCamera.aspect;
+        }
+        else
+        {
+            //*  Perspective: size depends on distance and FOV
+            height = 2f * distance * Mathf.Tan(targetCamera.fieldOfView * 0.5f * Mathf.Deg2Rad);
+            width = height * targetCamera.aspect;
+        }
 
         if (keepSquare)
         {
@@ -271,27 +293,32 @@ public class PlaneFitToCameraTool : EditorWindow
         float meshSize;
         MeshType type = DetectMeshType(out meshSize);
 
+        //*  --- Scale ---
         Vector3 scale = planeTransform.localScale;
 
         if (type == MeshType.Plane)
         {
+            //*  Plane: XZ plane
             scale.x = width / meshSize;
             scale.z = height / meshSize;
         }
         else
         {
+            //*  Quad / Unknown: XY plane
             scale.x = width / meshSize;
             scale.y = height / meshSize;
         }
 
         planeTransform.localScale = scale;
 
+        //*  --- Position ---
         if (alignPosition)
         {
             planeTransform.position = targetCamera.transform.position +
                                       targetCamera.transform.forward * distance;
         }
 
+        //*  --- Rotation ---
         if (alignRotation)
         {
             var camTr = targetCamera.transform;
@@ -309,6 +336,7 @@ public class PlaneFitToCameraTool : EditorWindow
                 rot = Quaternion.LookRotation(-camTr.forward, camTr.up);
             }
 
+            //*  Flip so texture is not upside down
             rot *= Quaternion.Euler(0, 180, 0);
 
             float angle = extraRotation switch
